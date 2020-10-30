@@ -1,0 +1,493 @@
+---
+title: "Feedback Analysis in Udemy Courses"
+author: "Douglas Dias, Carlos Azevedo"
+date: "30/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+#Instalar
+install.packages("tm", repos = 'http://cran.us.r-project.org')
+install.packages("wordcloud", repos = 'http://cran.us.r-project.org')
+install.packages("RColorBrewer", repos = 'http://cran.us.r-project.org')
+install.packages("syuzhet", repos = 'http://cran.us.r-project.org')
+
+#Carregar
+library("tm")
+library("wordcloud")
+library("RColorBrewer")
+library("syuzhet")
+
+```
+
+<center>
+
+Este trabalho foi desenvolvido como um projeto final da disciplina Mineração de Dados Educacionais, lecionada pelo Prof. Dr. Rafael Mello.
+
+</center>
+
+# {.tabset .center}
+
+## Introdução
+
+## Extração de Dados
+
+## Análise de Dados {.tabset .center}
+
+```{r include=F}
+defaultW <- getOption("warn") 
+
+options(warn = -1)
+```
+
+### Angular: The Complete Guide 2020 Edition {.tabset}
+
+```{r message=FALSE}
+angularCourseData <- read.csv("../Datasets/AngularTheCompleteGuide2020Edition.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+angular_t <- paste(angularCourseData$V1, collapse = " ")
+angular_S <- VectorSource(angular_t)
+angular_corpus <- Corpus(angular_S)
+
+# Convertendo tudo para lowercase
+angular_corpus <- tm_map(angular_corpus, tolower)
+
+# Removendo pontuação
+angular_corpus <- tm_map(angular_corpus, removePunctuation)
+
+# Removendo espaços em branco
+angular_corpus <- tm_map(angular_corpus, stripWhitespace)
+
+# Removes stopwords
+angular_corpus <- tm_map(angular_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+angular_corpus <- tm_map(angular_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+angular_corpus <- tm_map(angular_corpus, content_transformer(removeNumPunct))
+angular_tdm <- TermDocumentMatrix(angular_corpus)
+angular_tdm <- as.matrix(angular_tdm)
+fre <- sort(rowSums(angular_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(angular_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  angular_texts <- angularCourseData$V1
+  s <- get_nrc_sentiment(angular_texts)
+```
+
+```{r}
+  barplot(colSums(s), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Azure DevOps: Integração Contínua e Entrega Contínua {.tabset}
+
+```{r message=FALSE}
+azureCourseData <- read.csv("../Datasets/AzureDevOpsIntegracaoContinuaEntregaContinua.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+azure_t <- paste(azureCourseData$V1, collapse = " ")
+azure_S <- VectorSource(azure_t)
+azure_corpus <- Corpus(azure_S)
+
+# Convertendo tudo para lowercase
+azure_corpus <- tm_map(azure_corpus, tolower)
+
+# Removendo pontuação
+angular_corpus <- tm_map(angular_corpus, removePunctuation)
+
+# Removendo espaços em branco
+azure_corpus <- tm_map(azure_corpus, stripWhitespace)
+
+# Removendo stopwords
+azure_corpus <- tm_map(azure_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+azure_corpus <- tm_map(azure_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+azure_corpus <- tm_map(azure_corpus, content_transformer(removeNumPunct))
+azure_tdm <- TermDocumentMatrix(azure_corpus)
+azure_tdm <- as.matrix(azure_tdm)
+fre <- sort(rowSums(azure_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(azure_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  azure_texts <- azureCourseData$V1
+  azureScore <- get_nrc_sentiment(azure_texts)
+```
+
+```{r}
+  barplot(colSums(azureScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Become a Calculus 1 Master {.tabset}
+
+```{r message=FALSE}
+calculusCourseData <- read.csv("../Datasets/BecomeaCalculus1Master.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+calculus_t <- paste(calculusCourseData$V1, collapse = " ")
+calculus_S <- VectorSource(calculus_t)
+calculus_corpus <- Corpus(calculus_S)
+
+# Convertendo tudo para lowercase
+calculus_corpus <- tm_map(calculus_corpus, tolower)
+
+# Removendo pontuação
+calculus_corpus <- tm_map(calculus_corpus, removePunctuation)
+
+# Removendo espaços em branco
+calculus_corpus <- tm_map(calculus_corpus, stripWhitespace)
+
+# Removes stopwords
+calculus_corpus <- tm_map(calculus_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+calculus_corpus <- tm_map(calculus_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+calculus_corpus <- tm_map(calculus_corpus, content_transformer(removeNumPunct))
+calculus_tdm <- TermDocumentMatrix(calculus_corpus)
+calculus_tdm <- as.matrix(calculus_tdm)
+fre <- sort(rowSums(calculus_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(calculus_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  calculus_texts <- calculusCourseData$V1
+  calculusScore <- get_nrc_sentiment(calculus_texts)
+```
+
+```{r}
+  barplot(colSums(calculusScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Curso Completo do Desenvolvedor Web {.tabset}
+
+```{r message=FALSE}
+completeWebCourseData <- read.csv("../Datasets/CursoCompletodoDesenvolvedorWeb.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+completeWeb_t <- paste(completeWebCourseData$V1, collapse = " ")
+completeWeb_S <- VectorSource(completeWeb_t)
+completeWeb_corpus <- Corpus(completeWeb_S)
+
+# Convertendo tudo para lowercase
+completeWeb_corpus <- tm_map(completeWeb_corpus, tolower)
+
+# Removendo pontuação
+completeWeb_corpus <- tm_map(completeWeb_corpus, removePunctuation)
+
+# Removendo espaços em branco
+completeWeb_corpus <- tm_map(completeWeb_corpus, stripWhitespace)
+
+# Removes stopwords
+completeWeb_corpus <- tm_map(completeWeb_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+completeWeb_corpus <- tm_map(completeWeb_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+completeWeb_corpus <- tm_map(completeWeb_corpus, content_transformer(removeNumPunct))
+completeWeb_tdm <- TermDocumentMatrix(completeWeb_corpus)
+completeWeb_tdm <- as.matrix(completeWeb_tdm)
+fre <- sort(rowSums(completeWeb_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(completeWeb_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  completeWeb_texts <- completeWebCourseData$V1
+  completeWebScore <- get_nrc_sentiment(completeWeb_texts)
+```
+
+```{r}
+  barplot(colSums(completeWebScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Curso Web Moderno Completo com JavaScript 2020 {.tabset}
+
+```{r message=FALSE}
+modernWebCourseData <- read.csv("../Datasets/CursoWebModernoCompletocomJavaScript2020.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+modernWeb_t <- paste(modernWebCourseData$V1, collapse = " ")
+modernWeb_S <- VectorSource(modernWeb_t)
+modernWeb_corpus <- Corpus(modernWeb_S)
+
+# Convertendo tudo para lowercase
+modernWeb_corpus <- tm_map(modernWeb_corpus, tolower)
+
+# Removendo pontuação
+modernWeb_corpus <- tm_map(modernWeb_corpus, removePunctuation)
+
+# Removendo espaços em branco
+modernWeb_corpus <- tm_map(modernWeb_corpus, stripWhitespace)
+
+# Removes stopwords
+modernWeb_corpus <- tm_map(modernWeb_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+modernWeb_corpus <- tm_map(modernWeb_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+modernWeb_corpus <- tm_map(modernWeb_corpus, content_transformer(removeNumPunct))
+modernWeb_tdm <- TermDocumentMatrix(modernWeb_corpus)
+modernWeb_tdm <- as.matrix(modernWeb_tdm)
+fre <- sort(rowSums(modernWeb_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(modernWeb_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  modernWeb_texts <- modernWebCourseData$V1
+  modernWebScore <- get_nrc_sentiment(modernWeb_texts)
+```
+
+```{r}
+  barplot(colSums(modernWebScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Python para Data Science e Machine Learning Completo {.tabset}
+
+```{r message=FALSE}
+pythonCourseData <- read.csv("../Datasets/PythonParaDataScienceMachineLearningCOMPLETO.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+python_t <- paste(pythonCourseData$V1, collapse = " ")
+python_S <- VectorSource(python_t)
+python_corpus <- Corpus(python_S)
+
+# Convertendo tudo para lowercase
+python_corpus <- tm_map(python_corpus, tolower)
+
+# Removendo pontuação
+python_corpus <- tm_map(python_corpus, removePunctuation)
+
+# Removendo espaços em branco
+python_corpus <- tm_map(python_corpus, stripWhitespace)
+
+# Removes stopwords
+python_corpus <- tm_map(python_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+python_corpus <- tm_map(python_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+python_corpus <- tm_map(python_corpus, content_transformer(removeNumPunct))
+python_tdm <- TermDocumentMatrix(python_corpus)
+python_tdm <- as.matrix(python_tdm)
+fre <- sort(rowSums(python_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(python_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  python_texts <- pythonCourseData$V1
+  pythonScore <- get_nrc_sentiment(python_texts)
+```
+
+```{r}
+  barplot(colSums(pythonScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### The Complete Cyber Security Course: Hackers Exposed {.tabset}
+
+```{r message=FALSE}
+SecurityCourseData <- read.csv("../Datasets/TheCompleteCyberSecurityCourseHackersExposed.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+security_t <- paste(SecurityCourseData$V1, collapse = " ")
+security_S <- VectorSource(security_t)
+security_corpus <- Corpus(security_S)
+
+# Convertendo tudo para lowercase
+security_corpus <- tm_map(security_corpus, tolower)
+
+# Removendo pontuação
+security_corpus <- tm_map(security_corpus, removePunctuation)
+
+# Removendo espaços em branco
+security_corpus <- tm_map(security_corpus, stripWhitespace)
+
+# Removes stopwords
+security_corpus <- tm_map(security_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+security_corpus <- tm_map(security_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+security_corpus <- tm_map(security_corpus, content_transformer(removeNumPunct))
+security_tdm <- TermDocumentMatrix(security_corpus)
+security_tdm <- as.matrix(security_tdm)
+fre <- sort(rowSums(security_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(security_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  security_texts <- SecurityCourseData$V1
+  securityScore <- get_nrc_sentiment(security_texts)
+```
+
+```{r}
+  barplot(colSums(securityScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+### Unreal Engine C++ Developer: Learn C++ and Make Video Games {.tabset}
+
+```{r message=FALSE}
+unrealCourseData <- read.csv("../Datasets/UnrealEngineCPlusPlusDeveloperLearnCPlusPlusandMakeVideoGames.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+unreal_t <- paste(unrealCourseData$V1, collapse = " ")
+unreal_S <- VectorSource(unreal_t)
+unreal_corpus <- Corpus(unreal_S)
+
+# Convertendo tudo para lowercase
+unreal_corpus <- tm_map(unreal_corpus, tolower)
+
+# Removendo pontuação
+unreal_corpus <- tm_map(unreal_corpus, removePunctuation)
+
+# Removendo espaços em branco
+unreal_corpus <- tm_map(unreal_corpus, stripWhitespace)
+
+# Removes stopwords
+unreal_corpus <- tm_map(unreal_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+unreal_corpus <- tm_map(unreal_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+unreal_corpus <- tm_map(unreal_corpus, content_transformer(removeNumPunct))
+unreal_tdm <- TermDocumentMatrix(unreal_corpus)
+unreal_tdm <- as.matrix(unreal_tdm)
+fre <- sort(rowSums(unreal_tdm),decreasing=TRUE)
+
+```
+
+#### Nuvem de Palavras
+
+```{r}
+wordcloud(unreal_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+#### Análise de Sentimento
+
+```{r}
+  # Gives points to the tweets, measuring them
+  unreal_texts <- unrealCourseData$V1
+  unrealScore <- get_nrc_sentiment(unreal_texts)
+```
+
+```{r}
+  barplot(colSums(unrealScore), las=2, col = rainbow(10),
+    ylab = "Quantity", main = "Pontuação de Sentimentos")
+```
+
+## Conclusão
+
