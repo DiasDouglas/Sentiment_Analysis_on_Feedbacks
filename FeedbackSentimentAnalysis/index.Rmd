@@ -1,5 +1,5 @@
 ---
-title: "Feedback Analysis in Udemy Courses"
+title: "Análise de Avaliações em Cursos da Udemy Utilizando Nuvens de Palavras e Análise de Sentimentos"
 author: "Douglas Dias, Carlos Azevedo"
 date: "30/10/2020"
 output: html_document
@@ -12,18 +12,22 @@ install.packages("tm", repos = 'http://cran.us.r-project.org')
 install.packages("wordcloud", repos = 'http://cran.us.r-project.org')
 install.packages("RColorBrewer", repos = 'http://cran.us.r-project.org')
 install.packages("syuzhet", repos = 'http://cran.us.r-project.org')
+install.packages("rlang", repos = 'http://cran.us.r-project.org')
 
 #Carregar
 library("tm")
 library("wordcloud")
 library("RColorBrewer")
 library("syuzhet")
+library("rlang")
 
 ```
 
 <center>
 
-Este trabalho foi desenvolvido como um projeto final da disciplina Mineração de Dados Educacionais, lecionada pelo Prof. Dr. Rafael Mello.
+Trabalho desenvolvido como um projeto final da disciplina Mineração de Dados Educacionais, lecionada pelo Prof. Dr. Rafael Mello, de Agosto a Outubro de 2020. Departamento de Computação, UFRPE.
+
+Este projeto, incluindo os datasets utilizados, está disponível no GitHub, [aqui](https://github.com/DiasDouglas/Sentiment_Analysis_on_Feedbacks).
 
 </center>
 
@@ -31,7 +35,33 @@ Este trabalho foi desenvolvido como um projeto final da disciplina Mineração d
 
 ## Introdução
 
-## Extração de Dados
+Com a chegada da COVID-19 e a pandemia que surgiu em decorrência dela, os estudos online assumiram um papel ainda mais importante na educação. Uma das muitas ferramentas de ensino e aprendizado dessa categoria são as videoaulas, muito presentes no ensino a distância, e entre as várias plataformas EAD conhecidas, existe a Udemy.
+
+
+![*Logo da Udemy*](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/UdemyLogo.svg/1920px-UdemyLogo.svg.png)
+
+
+Cada curso na Udemy possui descrições do que será estudado, estrutura do curso e as avaliações dos alunos, dentre outras informações. As avaliações consistem em uma nota, de 1 a 5, e de um texto no qual o aluno pode expressar as suas impressões no decorrer ou após concluir o curso. Cada aluno pode deixar apenas uma avaliação, mas ela pode ser editada.
+
+Desta forma, propomos uma simples ferramenta que possa extrair informações úteis dos comentários avaliativos, tanto para quem está cursando ou ainda vai cursar, quanto para o autor do curso. Desta forma, através de uma consulta a uma nuvem de palavras, é possível ver qual as palavras que foram utilizadas com mais frequência nas avaliações, e com a análise de sentimentos, é possível obter a importantíssima informação de quais emoções os alunos expressaram em suas avaliações através de seus textos. Estre trabalho foi desenvolvido usando a linguagem R. Os comentários foram extraídos manualmente de cada um dos oito cursos analisados. Foram extraídos 100 comentários para cada um dos cursos, separados em datasets oito datasets, um para cada curso. Foram escolhidos quatro cursos em português e quatro em inglês, com as avaliações extraídas pertencendo ao mesmo idioma do curso.
+
+Com os processos descritos neste trabalho e com os resultados obtidos, esperamos contribuir com mais uma ferramenta que permita alunos e professores a terem ainda mais informações a respeito de cursos dos quais participam ou desejam participar, mas ainda mais, que os professores possam ter mais uma dimensão a levar em consideração na auto avaliação do curso que está oferecendo: a emoção de seus alunos em relação ao seu trabalho, de maneira quantificada e indo além de uma simples nota.
+
+## Bibliotecas Utilizadas
+
+Algumas bibliotecas serão utilizadas nesse projeto, e estão descritas abaixo:
+
+**tm:** Text Mining Infrastructure in R, um pacote com várias funções úteis para mineração de texto. Link: http://tm.r-forge.r-project.org/. Documentação: https://cran.r-project.org/web/packages/tm/tm.pdf
+
+**wordcloud:** Um pacote com funções dedicadas à geração de nuvens de palavras. Link: http://blog.fellstat.com/?cat=11. Documentação: https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf
+
+**RColorBrewer:** Cria paletas de cores que combinam umas com as outras, especialmente para mapas temáticos, ou, no caso deste projeto, para nuvens de palavras.  Documentação: https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf
+
+**syuzhet:** Possui uma série de funções voltadas para a extração de sentimentos e de enredos derivados de sentimentos de textos. Neste trabalho, é utilizada a função get_nrc_sentiment(), que chama o dicionário de sentimentos NRC para calcular a presendça de oito diferentes emoções e suas correspondentes valências em um texto. Documentação: https://cran.r-project.org/web/packages/syuzhet/syuzhet.pdf
+
+## Obtenção dos Dados
+
+Os dados, 800 avaliações, foram extraídos de 8 cursos diferentes da Udemy. Todos os cursos possuem avaliação acima de 4, em uma escala que vai até 5. As avaliações descritivas, em texto corrido, foram extraídas manualmente, e dispostas em arquivos CSV, um para cara curso, e estão disponíveis [aqui](https://github.com/DiasDouglas/Sentiment_Analysis_on_Feedbacks/tree/main/Datasets). Cada linha do arquivo CSV representa uma única avaliação, ou seja, cada arquivo possui 100 avaliações. 
 
 ## Análise de Dados {.tabset .center}
 
@@ -41,11 +71,22 @@ defaultW <- getOption("warn")
 options(warn = -1)
 ```
 
-### Angular: The Complete Guide 2020 Edition {.tabset}
+Nesta sessão serão analisados alguns cursos, através de uma amostra de 100 avaliações recentes, retiradas da página do curso. Para fins de organização, os cursos estão separados entre Cursos em Inglês e Cursos em Português. Dentro de cada um deles, terá uma nuvem de palavras e a análise dos sentimentos extraídos.
+
+Todo o processo de carregamento, processamento, limpeza dos dados e plotagem estão disponíveis abaixo.
+
+### Cursos em Inglês {.tabset}
+#### Angular: The Complete Guide (2020 Edition) {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/the-complete-guide-to-angular-2/**
+
+**Autor: Maximilian Schwarzmüller**
+
+**Avaliação Média: 4,6 (em 30/10/2020)**
 
 ```{r message=FALSE}
 angularCourseData <- read.csv("../Datasets/AngularTheCompleteGuide2020Edition.csv", header = F, sep = ',')
-
+  
 # Unindo todos os comentários em um vetor unidimensional
 angular_t <- paste(angularCourseData$V1, collapse = " ")
 angular_S <- VectorSource(angular_t)
@@ -76,7 +117,7 @@ fre <- sort(rowSums(angular_tdm),decreasing=TRUE)
 
 ```
 
-#### Nuvem de Palavras
+##### Nuvem de Palavras
 
 ```{r}
 wordcloud(angular_corpus, min.freq = 4, max.words=50,
@@ -84,356 +125,32 @@ wordcloud(angular_corpus, min.freq = 4, max.words=50,
           colors=brewer.pal(8, "Dark2"))
 ```
 
-#### Análise de Sentimento
+Analisando as palavras plotadas e excluindo as mais recorrentes, uma vez que são simplesmente a palavra "course" e o tema do curso, "angular", temos as palavras "Max" (o autor do curso), "great", "good", "really" e "project". De fato, as avaliações mais recentes elogiam bastante o instrutor, sua didática e conteúdo do curso, bem como a característica do curso se manter sempre atualizado. Nota-se a ausência de palavras negativas.
+
+##### Análise de Sentimento
 
 ```{r}
-  # Gives points to the tweets, measuring them
+  # Pontua os comentários pelas emoções extraídas
   angular_texts <- angularCourseData$V1
-  s <- get_nrc_sentiment(angular_texts)
+  s <- get_nrc_sentiment(angular_texts, language = "english")
 ```
 
 ```{r}
   barplot(colSums(s), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
 ```
 
-### Azure DevOps: Integração Contínua e Entrega Contínua {.tabset}
+O sentimento positivo se destaca, seguido da confiança, expectativa/ansiedade e da alegria. Sentimentos negativos estão em um mesmo nível que surpresa. Em quantidades inferiores, mas aparentes, aparecem o medo, tristeza e desgosto.
 
-```{r message=FALSE}
-azureCourseData <- read.csv("../Datasets/AzureDevOpsIntegracaoContinuaEntregaContinua.csv", header = F, sep = ',', encoding="UTF-8")
+Os sentimentos negativos estão aparentes, embora seja em uma quantidade pequena. Chama a atenção a expectativa/ansiedade, que chega à terceira colocação. O instrutor possui outros cursos na plataforma, e com frequência os alunos mencionam que irão estudar outros cursos dele.
 
-# Unindo todos os comentários em um vetor unidimensional
-azure_t <- paste(azureCourseData$V1, collapse = " ")
-azure_S <- VectorSource(azure_t)
-azure_corpus <- Corpus(azure_S)
+#### Unreal Engine C++ Developer: Learn C++ and Make Video Games {.tabset}
 
-# Convertendo tudo para lowercase
-azure_corpus <- tm_map(azure_corpus, tolower)
+**Link para o curso: https://www.udemy.com/course/unrealcourse/**
 
-# Removendo pontuação
-angular_corpus <- tm_map(angular_corpus, removePunctuation)
+**Autor: Ben Tristem, Sam Pattuzzi, GameDev.tv Team, Rob Brooks**
 
-# Removendo espaços em branco
-azure_corpus <- tm_map(azure_corpus, stripWhitespace)
-
-# Removendo stopwords
-azure_corpus <- tm_map(azure_corpus, removeWords, stopwords("pt"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-azure_corpus <- tm_map(azure_corpus, removeURL)
-
-# Remove tudo o que não seja letras em português ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-azure_corpus <- tm_map(azure_corpus, content_transformer(removeNumPunct))
-azure_tdm <- TermDocumentMatrix(azure_corpus)
-azure_tdm <- as.matrix(azure_tdm)
-fre <- sort(rowSums(azure_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(azure_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  azure_texts <- azureCourseData$V1
-  azureScore <- get_nrc_sentiment(azure_texts)
-```
-
-```{r}
-  barplot(colSums(azureScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### Become a Calculus 1 Master {.tabset}
-
-```{r message=FALSE}
-calculusCourseData <- read.csv("../Datasets/BecomeaCalculus1Master.csv", header = F, sep = ',')
-
-# Unindo todos os comentários em um vetor unidimensional
-calculus_t <- paste(calculusCourseData$V1, collapse = " ")
-calculus_S <- VectorSource(calculus_t)
-calculus_corpus <- Corpus(calculus_S)
-
-# Convertendo tudo para lowercase
-calculus_corpus <- tm_map(calculus_corpus, tolower)
-
-# Removendo pontuação
-calculus_corpus <- tm_map(calculus_corpus, removePunctuation)
-
-# Removendo espaços em branco
-calculus_corpus <- tm_map(calculus_corpus, stripWhitespace)
-
-# Removes stopwords
-calculus_corpus <- tm_map(calculus_corpus, removeWords, stopwords("en"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-calculus_corpus <- tm_map(calculus_corpus, removeURL)
-
-# Remove tudo o que não seja letras em inglês ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-calculus_corpus <- tm_map(calculus_corpus, content_transformer(removeNumPunct))
-calculus_tdm <- TermDocumentMatrix(calculus_corpus)
-calculus_tdm <- as.matrix(calculus_tdm)
-fre <- sort(rowSums(calculus_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(calculus_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  calculus_texts <- calculusCourseData$V1
-  calculusScore <- get_nrc_sentiment(calculus_texts)
-```
-
-```{r}
-  barplot(colSums(calculusScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### Curso Completo do Desenvolvedor Web {.tabset}
-
-```{r message=FALSE}
-completeWebCourseData <- read.csv("../Datasets/CursoCompletodoDesenvolvedorWeb.csv", header = F, sep = ',', encoding="UTF-8")
-
-# Unindo todos os comentários em um vetor unidimensional
-completeWeb_t <- paste(completeWebCourseData$V1, collapse = " ")
-completeWeb_S <- VectorSource(completeWeb_t)
-completeWeb_corpus <- Corpus(completeWeb_S)
-
-# Convertendo tudo para lowercase
-completeWeb_corpus <- tm_map(completeWeb_corpus, tolower)
-
-# Removendo pontuação
-completeWeb_corpus <- tm_map(completeWeb_corpus, removePunctuation)
-
-# Removendo espaços em branco
-completeWeb_corpus <- tm_map(completeWeb_corpus, stripWhitespace)
-
-# Removes stopwords
-completeWeb_corpus <- tm_map(completeWeb_corpus, removeWords, stopwords("pt"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-completeWeb_corpus <- tm_map(completeWeb_corpus, removeURL)
-
-# Remove tudo o que não seja letras em português ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-completeWeb_corpus <- tm_map(completeWeb_corpus, content_transformer(removeNumPunct))
-completeWeb_tdm <- TermDocumentMatrix(completeWeb_corpus)
-completeWeb_tdm <- as.matrix(completeWeb_tdm)
-fre <- sort(rowSums(completeWeb_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(completeWeb_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  completeWeb_texts <- completeWebCourseData$V1
-  completeWebScore <- get_nrc_sentiment(completeWeb_texts)
-```
-
-```{r}
-  barplot(colSums(completeWebScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### Curso Web Moderno Completo com JavaScript 2020 {.tabset}
-
-```{r message=FALSE}
-modernWebCourseData <- read.csv("../Datasets/CursoWebModernoCompletocomJavaScript2020.csv", header = F, sep = ',', encoding="UTF-8")
-
-# Unindo todos os comentários em um vetor unidimensional
-modernWeb_t <- paste(modernWebCourseData$V1, collapse = " ")
-modernWeb_S <- VectorSource(modernWeb_t)
-modernWeb_corpus <- Corpus(modernWeb_S)
-
-# Convertendo tudo para lowercase
-modernWeb_corpus <- tm_map(modernWeb_corpus, tolower)
-
-# Removendo pontuação
-modernWeb_corpus <- tm_map(modernWeb_corpus, removePunctuation)
-
-# Removendo espaços em branco
-modernWeb_corpus <- tm_map(modernWeb_corpus, stripWhitespace)
-
-# Removes stopwords
-modernWeb_corpus <- tm_map(modernWeb_corpus, removeWords, stopwords("pt"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-modernWeb_corpus <- tm_map(modernWeb_corpus, removeURL)
-
-# Remove tudo o que não seja letras em português ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-modernWeb_corpus <- tm_map(modernWeb_corpus, content_transformer(removeNumPunct))
-modernWeb_tdm <- TermDocumentMatrix(modernWeb_corpus)
-modernWeb_tdm <- as.matrix(modernWeb_tdm)
-fre <- sort(rowSums(modernWeb_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(modernWeb_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  modernWeb_texts <- modernWebCourseData$V1
-  modernWebScore <- get_nrc_sentiment(modernWeb_texts)
-```
-
-```{r}
-  barplot(colSums(modernWebScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### Python para Data Science e Machine Learning Completo {.tabset}
-
-```{r message=FALSE}
-pythonCourseData <- read.csv("../Datasets/PythonParaDataScienceMachineLearningCOMPLETO.csv", header = F, sep = ',', encoding="UTF-8")
-
-# Unindo todos os comentários em um vetor unidimensional
-python_t <- paste(pythonCourseData$V1, collapse = " ")
-python_S <- VectorSource(python_t)
-python_corpus <- Corpus(python_S)
-
-# Convertendo tudo para lowercase
-python_corpus <- tm_map(python_corpus, tolower)
-
-# Removendo pontuação
-python_corpus <- tm_map(python_corpus, removePunctuation)
-
-# Removendo espaços em branco
-python_corpus <- tm_map(python_corpus, stripWhitespace)
-
-# Removes stopwords
-python_corpus <- tm_map(python_corpus, removeWords, stopwords("pt"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-python_corpus <- tm_map(python_corpus, removeURL)
-
-# Remove tudo o que não seja letras em português ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-python_corpus <- tm_map(python_corpus, content_transformer(removeNumPunct))
-python_tdm <- TermDocumentMatrix(python_corpus)
-python_tdm <- as.matrix(python_tdm)
-fre <- sort(rowSums(python_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(python_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  python_texts <- pythonCourseData$V1
-  pythonScore <- get_nrc_sentiment(python_texts)
-```
-
-```{r}
-  barplot(colSums(pythonScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### The Complete Cyber Security Course: Hackers Exposed {.tabset}
-
-```{r message=FALSE}
-SecurityCourseData <- read.csv("../Datasets/TheCompleteCyberSecurityCourseHackersExposed.csv", header = F, sep = ',')
-
-# Unindo todos os comentários em um vetor unidimensional
-security_t <- paste(SecurityCourseData$V1, collapse = " ")
-security_S <- VectorSource(security_t)
-security_corpus <- Corpus(security_S)
-
-# Convertendo tudo para lowercase
-security_corpus <- tm_map(security_corpus, tolower)
-
-# Removendo pontuação
-security_corpus <- tm_map(security_corpus, removePunctuation)
-
-# Removendo espaços em branco
-security_corpus <- tm_map(security_corpus, stripWhitespace)
-
-# Removes stopwords
-security_corpus <- tm_map(security_corpus, removeWords, stopwords("en"))
-
-# Removendo URLs
-removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
-security_corpus <- tm_map(security_corpus, removeURL)
-
-# Remove tudo o que não seja letras em inglês ou espaços em branco
-removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
-security_corpus <- tm_map(security_corpus, content_transformer(removeNumPunct))
-security_tdm <- TermDocumentMatrix(security_corpus)
-security_tdm <- as.matrix(security_tdm)
-fre <- sort(rowSums(security_tdm),decreasing=TRUE)
-
-```
-
-#### Nuvem de Palavras
-
-```{r}
-wordcloud(security_corpus, min.freq = 4, max.words=50,
-          random.order=FALSE, rot.per=0.35,
-          colors=brewer.pal(8, "Dark2"))
-```
-
-#### Análise de Sentimento
-
-```{r}
-  # Gives points to the tweets, measuring them
-  security_texts <- SecurityCourseData$V1
-  securityScore <- get_nrc_sentiment(security_texts)
-```
-
-```{r}
-  barplot(colSums(securityScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
-```
-
-### Unreal Engine C++ Developer: Learn C++ and Make Video Games {.tabset}
+**Avaliação Média: 4,6 (em 30/10/2020)**
 
 ```{r message=FALSE}
 unrealCourseData <- read.csv("../Datasets/UnrealEngineCPlusPlusDeveloperLearnCPlusPlusandMakeVideoGames.csv", header = F, sep = ',')
@@ -468,7 +185,7 @@ fre <- sort(rowSums(unreal_tdm),decreasing=TRUE)
 
 ```
 
-#### Nuvem de Palavras
+##### Nuvem de Palavras
 
 ```{r}
 wordcloud(unreal_corpus, min.freq = 4, max.words=50,
@@ -476,18 +193,421 @@ wordcloud(unreal_corpus, min.freq = 4, max.words=50,
           colors=brewer.pal(8, "Dark2"))
 ```
 
-#### Análise de Sentimento
+Além das palavras que resumem o curso como "great", "good", também aparecem as palavras "toon" e "tanks". Elas se referem a um dos módulos do curso, "Toon Tanks", que foi citado em várias avaliações como sendo muito corrido e de difícil digestão, sendo um "gargalo" para muitos dos alunos. Os instrutores foram bastante citados, com os estudantes expressando suas preferências com relação a quem passava o conteúdo da melhor forma. 
+
+##### Análise de Sentimento
 
 ```{r}
-  # Gives points to the tweets, measuring them
+  # Pontua os comentários pelas emoções extraídas
   unreal_texts <- unrealCourseData$V1
-  unrealScore <- get_nrc_sentiment(unreal_texts)
+  unrealScore <- get_nrc_sentiment(unreal_texts, language = "english")
 ```
 
 ```{r}
   barplot(colSums(unrealScore), las=2, col = rainbow(10),
-    ylab = "Quantity", main = "Pontuação de Sentimentos")
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
 ```
+
+Aqui vemos um aumento dos sentimentos negativos, em relação ao curso anterior. Porém, os sentimentos positivos também pontuaram mais. É notável o número de sentimentos negativos como a tristeza, raiva, medo e desgosto, apesar de tudo. Analisando as avaliações, percebe-se que em geral as críticas são voltadas para um tópico específico, o "Toon Tanks".
+
+#### Become a Calculus 1 Master {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/calculus1/**
+
+**Autora: Krista King**
+
+**Avaliação Média: 4,7 (em 30/10/2020)**
+
+```{r message=FALSE}
+calculusCourseData <- read.csv("../Datasets/BecomeaCalculus1Master.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+calculus_t <- paste(calculusCourseData$V1, collapse = " ")
+calculus_S <- VectorSource(calculus_t)
+calculus_corpus <- Corpus(calculus_S)
+
+# Convertendo tudo para lowercase
+calculus_corpus <- tm_map(calculus_corpus, tolower)
+
+# Removendo pontuação
+calculus_corpus <- tm_map(calculus_corpus, removePunctuation)
+
+# Removendo espaços em branco
+calculus_corpus <- tm_map(calculus_corpus, stripWhitespace)
+
+# Removes stopwords
+calculus_corpus <- tm_map(calculus_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+calculus_corpus <- tm_map(calculus_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+calculus_corpus <- tm_map(calculus_corpus, content_transformer(removeNumPunct))
+calculus_tdm <- TermDocumentMatrix(calculus_corpus)
+calculus_tdm <- as.matrix(calculus_tdm)
+fre <- sort(rowSums(calculus_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(calculus_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+É possível observar um conjunto de palavras que formam elogios, e palavras mais variadas surgiram neste aqui. "great", "good, "thanks", "well", em conjunto com as demais palavras com frequência semelhante, formam elogios. "easy" e "amazing" também aparecem, em menor quantidade.
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  calculus_texts <- calculusCourseData$V1
+  calculusScore <- get_nrc_sentiment(calculus_texts, language = "english")
+```
+
+```{r}
+  barplot(colSums(calculusScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
+```
+
+Os aspectos positivos são bem superiores aos negativos. Positivo, confiança e alegria se destacam, com expectativa/ansiedade vindo logo em seguida. A instrutora possui diversos cursos na plataforma, e com frequência os alunos mencionam que cursarão outros, além deste.
+
+#### The Complete Cyber Security Course: Hackers Exposed {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/the-complete-internet-security-privacy-course-volume-1/**
+
+**Autor: Nathan House**
+
+**Avaliação: 4,5 (em 30/10/2020)**
+
+```{r message=FALSE}
+SecurityCourseData <- read.csv("../Datasets/TheCompleteCyberSecurityCourseHackersExposed.csv", header = F, sep = ',')
+
+# Unindo todos os comentários em um vetor unidimensional
+security_t <- paste(SecurityCourseData$V1, collapse = " ")
+security_S <- VectorSource(security_t)
+security_corpus <- Corpus(security_S)
+
+# Convertendo tudo para lowercase
+security_corpus <- tm_map(security_corpus, tolower)
+
+# Removendo pontuação
+security_corpus <- tm_map(security_corpus, removePunctuation)
+
+# Removendo espaços em branco
+security_corpus <- tm_map(security_corpus, stripWhitespace)
+
+# Removes stopwords
+security_corpus <- tm_map(security_corpus, removeWords, stopwords("en"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+security_corpus <- tm_map(security_corpus, removeURL)
+
+# Remove tudo o que não seja letras em inglês ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+security_corpus <- tm_map(security_corpus, content_transformer(removeNumPunct))
+security_tdm <- TermDocumentMatrix(security_corpus)
+security_tdm <- as.matrix(security_tdm)
+fre <- sort(rowSums(security_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(security_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+"great", "recommend", "excellent", são algumas das palavras de destaque. Easy também aparece, porém em menor quantidade que as demais, mas com frequência suficiente para ser plotada.
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  security_texts <- SecurityCourseData$V1
+  securityScore <- get_nrc_sentiment(security_texts, language = "english")
+```
+
+```{r}
+  barplot(colSums(securityScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
+```
+
+Aspectos positivos muito superiores aos negativos, mas que ainda se encontram presentes. Mais uma vez, o instrutor possui diversos cursos na plataforma, incluindo uma série na qual este curso é o primeiro dela, e os alunos mencionam a expectativa ou o desejo de fazer os demais. Isso se reflete na expectativa/ansiedade, equivalente à alegria.
+
+### Cursos em Português {.tabset}
+#### Azure DevOps: Integração Contínua e Entrega Contínua {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/azuredevops/**
+
+**Autor: Higor Barbosa**
+
+**Avaliação: 4,5 (em 30/10/2020)**
+
+```{r message=FALSE}
+azureCourseData <- read.csv("../Datasets/AzureDevOpsIntegracaoContinuaEntregaContinua.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+azure_t <- paste(azureCourseData$V1, collapse = " ")
+azure_S <- VectorSource(azure_t)
+azure_corpus <- Corpus(azure_S)
+
+# Convertendo tudo para lowercase
+azure_corpus <- tm_map(azure_corpus, tolower)
+
+# Removendo pontuação
+angular_corpus <- tm_map(angular_corpus, removePunctuation)
+
+# Removendo espaços em branco
+azure_corpus <- tm_map(azure_corpus, stripWhitespace)
+
+# Removendo stopwords
+azure_corpus <- tm_map(azure_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+azure_corpus <- tm_map(azure_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+azure_corpus <- tm_map(azure_corpus, content_transformer(removeNumPunct))
+azure_tdm <- TermDocumentMatrix(azure_corpus)
+azure_tdm <- as.matrix(azure_tdm)
+fre <- sort(rowSums(azure_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(azure_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+"bom", "excelente", "didática", "conteúdo", "bem" são algumas das palavras de maior destaque. Também inclui "recomendo", com menor frequência.
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  azure_texts <- azureCourseData$V1
+  azureScore <- get_nrc_sentiment(azure_texts, language = "portuguese")
+```
+
+```{r}
+  barplot(colSums(azureScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
+```
+
+Aqui, sentimentos negativos aparecem em uma quantidade muito próxima da quantidade de sentimentos de confiança, apesar de sentimentos positivos apresentarem uma quantidade muito superior. Analisando as avaliações, é fácil perceber que mesmo sendo bem avaliado, duas críticas aparecem com frequência: a música de fundo e a desatualização do curso em relação à interface do Azure DevOps.
+
+#### Curso Completo do Desenvolvedor Web {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/curso-html5-css3-javascript/**
+
+**Autores: Glaucio Daniel Souza Santos, João Rangel, Djalma Sindeaux, Hcode Treinamentos**
+
+**Avaliação: 4,6 (em 30/10/2020)**
+
+```{r message=FALSE}
+completeWebCourseData <- read.csv("../Datasets/CursoCompletodoDesenvolvedorWeb.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+completeWeb_t <- paste(completeWebCourseData$V1, collapse = " ")
+completeWeb_S <- VectorSource(completeWeb_t)
+completeWeb_corpus <- Corpus(completeWeb_S)
+
+# Convertendo tudo para lowercase
+completeWeb_corpus <- tm_map(completeWeb_corpus, tolower)
+
+# Removendo pontuação
+completeWeb_corpus <- tm_map(completeWeb_corpus, removePunctuation)
+
+# Removendo espaços em branco
+completeWeb_corpus <- tm_map(completeWeb_corpus, stripWhitespace)
+
+# Removes stopwords
+completeWeb_corpus <- tm_map(completeWeb_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+completeWeb_corpus <- tm_map(completeWeb_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+completeWeb_corpus <- tm_map(completeWeb_corpus, content_transformer(removeNumPunct))
+completeWeb_tdm <- TermDocumentMatrix(completeWeb_corpus)
+completeWeb_tdm <- as.matrix(completeWeb_tdm)
+fre <- sort(rowSums(completeWeb_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(completeWeb_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+Apesar do "excelente" e do "bom" aparecerem, também aparecem, em menor quantidade, as palavras "porém" e "problemas", com frequência suficiente para serem plotadas.
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  completeWeb_texts <- completeWebCourseData$V1
+  completeWebScore <- get_nrc_sentiment(completeWeb_texts)
+```
+
+```{r}
+  barplot(colSums(completeWebScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos", language = "portuguese")
+```
+
+Sentimentos positivos se sobressaem. Sentimentos de confiança estão apenas um pouco acima dos sentimentos negativos. Tristeza, surpresa e desgosto não foram detectados. Uma possível explicação para os sentimentos negativos pode ser verificada nas avaliações, que mencionam a desatualização do curso com frequência, o que trazem problemas na execução de vários comandos, além do uso de ferramentas já defasadas.
+
+#### Curso Web Moderno Completo com JavaScript 2020 {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/curso-web/**
+
+**Autores: Leonardo Moura Leitão, Cod3r Cursos Online**
+
+**Avaliação: 4,6 (em 30/10/2020)**
+
+```{r message=FALSE}
+modernWebCourseData <- read.csv("../Datasets/CursoWebModernoCompletocomJavaScript2020.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+modernWeb_t <- paste(modernWebCourseData$V1, collapse = " ")
+modernWeb_S <- VectorSource(modernWeb_t)
+modernWeb_corpus <- Corpus(modernWeb_S)
+
+# Convertendo tudo para lowercase
+modernWeb_corpus <- tm_map(modernWeb_corpus, tolower)
+
+# Removendo pontuação
+modernWeb_corpus <- tm_map(modernWeb_corpus, removePunctuation)
+
+# Removendo espaços em branco
+modernWeb_corpus <- tm_map(modernWeb_corpus, stripWhitespace)
+
+# Removes stopwords
+modernWeb_corpus <- tm_map(modernWeb_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+modernWeb_corpus <- tm_map(modernWeb_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+modernWeb_corpus <- tm_map(modernWeb_corpus, content_transformer(removeNumPunct))
+modernWeb_tdm <- TermDocumentMatrix(modernWeb_corpus)
+modernWeb_tdm <- as.matrix(modernWeb_tdm)
+fre <- sort(rowSums(modernWeb_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(modernWeb_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+"didática", "conteúdo", "bom", "bem", "parabéns" e excelente são algumas das palavras mais frequentes. Nota-se a presença de um "porém". 
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  modernWeb_texts <- modernWebCourseData$V1
+  modernWebScore <- get_nrc_sentiment(modernWeb_texts, language = "portuguese")
+```
+
+```{r}
+  barplot(colSums(modernWebScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
+```
+
+Aspectos positivos se sobressaem. Porém, sentimentos negativos estão na terceira colocação, superior à alegria. Tristeza está em um valor próximo à alegria, e medo também representa um pequeno valor, mas relevante, assim como raiva.
+
+#### Python para Data Science e Machine Learning Completo {.tabset}
+
+**Link para o curso: https://www.udemy.com/course/python-para-data-science-e-machine-learning/**
+
+**Autor: Rodrigo Soares Tadewald, Jose Portilla**
+
+**Avaliação: 4,4 (em 30/10/2020)**
+
+```{r message=FALSE}
+pythonCourseData <- read.csv("../Datasets/PythonParaDataScienceMachineLearningCOMPLETO.csv", header = F, sep = ',', encoding="UTF-8")
+
+# Unindo todos os comentários em um vetor unidimensional
+python_t <- paste(pythonCourseData$V1, collapse = " ")
+python_S <- VectorSource(python_t)
+python_corpus <- Corpus(python_S)
+
+# Convertendo tudo para lowercase
+python_corpus <- tm_map(python_corpus, tolower)
+
+# Removendo pontuação
+python_corpus <- tm_map(python_corpus, removePunctuation)
+
+# Removendo espaços em branco
+python_corpus <- tm_map(python_corpus, stripWhitespace)
+
+# Removes stopwords
+python_corpus <- tm_map(python_corpus, removeWords, stopwords("pt"))
+
+# Removendo URLs
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+python_corpus <- tm_map(python_corpus, removeURL)
+
+# Remove tudo o que não seja letras em português ou espaços em branco
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x)
+python_corpus <- tm_map(python_corpus, content_transformer(removeNumPunct))
+python_tdm <- TermDocumentMatrix(python_corpus)
+python_tdm <- as.matrix(python_tdm)
+fre <- sort(rowSums(python_tdm),decreasing=TRUE)
+
+```
+
+##### Nuvem de Palavras
+
+```{r}
+wordcloud(python_corpus, min.freq = 4, max.words=50,
+          random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+Poucas palavras se destacam, entre elas "bom". Também aparecem "responde", "respostas" e "perguntas". Uma queixa frequente nas avaliações é que o curso aparenta estar abandonado há dois anos, sem suporte do instrutor para dúvidas e inacabado. Porém, o conteúdo teórico básico é elogiado.
+
+##### Análise de Sentimento
+
+```{r}
+  # Pontua os comentários pelas emoções extraídas
+  python_texts <- pythonCourseData$V1
+  pythonScore <- get_nrc_sentiment(python_texts, language = "portuguese")
+```
+
+```{r}
+  barplot(colSums(pythonScore), las=2, col = rainbow(10),
+    ylab = "Quantidade", main = "Pontuação de Sentimentos")
+```
+
+Sentimentos positivos se sobressaem, mas os sentimentos negativos possuem pontuação muito próxima da pontuação para confiança.Tristeza se sobressai logo em seguida, seguido por ansiedade/expectativa, medo, raiva, e só então alegria e desgosto. O abandono do curso por parte do instrutor é mencionado com certa frequência nas avaliações, e parece ser uma das causas para esta pontuação. 
 
 ## Conclusão
 
+Com a utilização da linguagem R e várias ferramentas auxiliares, foi possível extrair informações úteis de maneira veloz e condensada das avaliações fornecidas pelos alunos acerca dos cursos dos quais eles participaram. Com estas informações, é possível agregar ainda mais características na análise de um curso e da maneira que o aluno se sente diante dele, característica importantíssima na construção do aprendizado.
+Para trabalhos futuros, esperamos ter a oportunidade de tornar este experimento mais robusto, com ainda mais informações a serem extraídas e com melhor qualidade, para que resultados precisos e ainda mais relevantes possam ser utilizados, em qualquer plataforma que siga o mesmo modelo de feedback via avaliação adotado pela Udemy. 
